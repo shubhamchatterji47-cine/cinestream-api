@@ -20,7 +20,8 @@ builder.Services.AddSwaggerGen();
 
 // Database (SQLite for simplicity — swap to SQL Server in prod)
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    //options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlite("Data Source=cinestream.db"));
 
 // JWT Authentication
 //var jwtKey = builder.Configuration["Jwt:Key"]!;
@@ -49,7 +50,7 @@ builder.Services.AddAuthorization();
 // CORS for Angular frontend
 builder.Services.AddCors(options =>
 {
-  options.AddPolicy("AllowAngular", policy => policy.WithOrigins("http://localhost:4200")
+  options.AddPolicy("AllowAngular", policy => policy.WithOrigins("http://localhost:4200", "https://your-app.vercel.app")
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
@@ -111,6 +112,7 @@ builder.Services.AddRateLimiter(options =>
   options.RejectionStatusCode = 429; // Too Many Requests
 });
 
+
 var app = builder.Build();
 
 // Middleware pipeline
@@ -133,5 +135,6 @@ using (var scope = app.Services.CreateScope())
   var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
   db.Database.EnsureCreated();
 }
+
 
 app.Run();
