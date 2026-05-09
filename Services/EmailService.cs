@@ -65,10 +65,16 @@ namespace CineStream.Services
             <p style='color:#999;font-size:12px'>If you didn't register, ignore this email.</p>
           </div>"
       };
+      var username = _configuration["Brevo:Username"]
+                    ?? Environment.GetEnvironmentVariable("Brevo__Username");
+      var password = _configuration["Brevo:Password"]
+                     ?? Environment.GetEnvironmentVariable("Brevo__Password");
 
       using var smtp = new SmtpClient();
-      await smtp.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
-      await smtp.AuthenticateAsync("chatterjishubham21@gmail.com", "bhfk lmhs ussj qlou");
+      //await smtp.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
+      //await smtp.AuthenticateAsync("chatterjishubham21@gmail.com", "bhfk lmhs ussj qlou");
+      await smtp.ConnectAsync("smtp-relay.brevo.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
+      await smtp.AuthenticateAsync(username, password);
       await smtp.SendAsync(email);
       await smtp.DisconnectAsync(true);
     }
