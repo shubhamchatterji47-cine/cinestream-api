@@ -180,6 +180,7 @@ using CineStream.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -209,7 +210,9 @@ namespace CineStream.Controllers
       if (!ModelState.IsValid)
         return BadRequest(ModelState);
 
-      var existingUser = appContext.Users.FirstOrDefault(x => x.Email == userDto.Email);
+      var existingUser = await appContext.Users
+ .FirstOrDefaultAsync(x => x.Email == userDto.Email);
+
       if (existingUser != null)
         return BadRequest("User already exists");
 
@@ -227,24 +230,12 @@ namespace CineStream.Controllers
       appContext.Users.Add(user);
       await appContext.SaveChangesAsync();
 
+      // ✅ FIXED: Uses Railway backend URL instead of localhost
       var confirmLink = $"https://cinestream-api-production.up.railway.app/api/user/confirm-email?token={token}";
 
-      // ✅ Try sending email but don't crash if it fails
-      try
-      {
-        await _emailService.SendEmail(user.Email, confirmLink);
-        return Ok("Registered successfully. Please check your email to confirm your account.");
-      }
-      catch (Exception ex)
-      {
-        // Log the error but still return success
-        Console.WriteLine($"EMAIL ERROR: {ex.Message}");
-        // ✅ Auto-confirm if email fails (temporary fix)
-        user.IsEmailConfirmed = true;
-        user.EmailToken = null;
-        await appContext.SaveChangesAsync();
-        return Ok("Registered successfully. You can login now.");
-      }
+      await _emailService.SendEmail(user.Email, confirmLink);
+
+      return Ok("Registered successfully. Please check your email to confirm your account.");
     }
 
     [EnableRateLimiting("authPolicy")]
@@ -252,6 +243,7 @@ namespace CineStream.Controllers
     public IActionResult Login(LoginDto loginDto)
     {
       var user = appContext.Users.FirstOrDefault(x => x.Email == loginDto.Email);
+
       if (user == null)
         return Unauthorized("Invalid email or password");
 
@@ -264,8 +256,10 @@ namespace CineStream.Controllers
       if (!BCrypt.Net.BCrypt.Verify(loginDto.PasswordHash, user.PasswordHash))
       {
         user.FailedAttempts++;
+
         if (user.FailedAttempts >= 5)
           user.LockoutEnd = DateTime.UtcNow.AddHours(1);
+
         appContext.SaveChanges();
         return Unauthorized($"Invalid password. Attempts: {user.FailedAttempts}");
       }
@@ -282,9 +276,12 @@ namespace CineStream.Controllers
         new Claim("Email", user.Email)
       };
 
-      var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
+      var key = new SymmetricSecurityKey(
+          Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
+
       var signIn = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-      var jwtToken = new JwtSecurityToken(
+
+      var jwttoken = new JwtSecurityToken(
           configuration["Jwt:Issuer"],
           configuration["Jwt:Audience"],
           claims,
@@ -292,8 +289,18 @@ namespace CineStream.Controllers
           signingCredentials: signIn
       );
 
-      string tokenValue = new JwtSecurityTokenHandler().WriteToken(jwtToken);
-      return Ok(new { token = tokenValue, user = user });
+      string tokenValue = new JwtSecurityTokenHandler().WriteToken(jwttoken);
+
+      return Ok(new
+      {
+        token = tokenValue,
+        user = new
+        {
+          user.Id,
+          user.FullName,
+          user.Email
+        }
+      });
     }
 
     [Authorize]
@@ -318,13 +325,16 @@ namespace CineStream.Controllers
     public async Task<IActionResult> ConfirmEmail(string token)
     {
       var user = appContext.Users.FirstOrDefault(x => x.EmailToken == token);
+
       if (user == null)
         return BadRequest("Invalid or expired token.");
 
       user.IsEmailConfirmed = true;
       user.EmailToken = null;
+
       await appContext.SaveChangesAsync();
 
+      // ✅ Redirects to your live Angular login page after confirmation
       return Redirect("https://cinestream-frontend-nine.vercel.app/login");
     }
   }

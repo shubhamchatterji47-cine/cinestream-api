@@ -49,7 +49,7 @@ namespace CineStream.Services
     {
       var email = new MimeMessage();
 
-      email.From.Add(new MailboxAddress("CineStream", "chatterjishubham21@gmail.com"));
+      email.From.Add(new MailboxAddress("CineStream", "shubhamchatterji47@gmail.com"));
       email.To.Add(MailboxAddress.Parse(toEmail));
       email.Subject = "Confirm your CineStream email";
 

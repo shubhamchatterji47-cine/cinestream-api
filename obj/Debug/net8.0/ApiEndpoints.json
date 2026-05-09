@@ -129,7 +129,7 @@
   },
   {
     "ContainingType": "CineStream.Controllers.UserController",
-    "Method": "GetUser",
+    "Method": "GetUsers",
     "RelativePath": "api/User/GetUsers",
     "HttpMethod": "GET",
     "IsController": true,
