@@ -150,16 +150,15 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// FIXED: Using SQLite instead of SQL Server (works on Railway/any Linux server)
+// ✅ FIXED: Using PostgreSQL instead of SQLite
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite("Data Source=cinestream.db"));
+    options.UseNpgsql(databaseUrl));
 
-// JWT Authentication
 builder.Services.AddAuthentication(options =>
 {
   options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -181,7 +180,6 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// FIXED: CORS allows localhost AND your Vercel production URL
 builder.Services.AddCors(options =>
 {
   options.AddPolicy("AllowAngular", policy =>
@@ -205,24 +203,18 @@ builder.Services.AddSwaggerGen(options =>
     In = ParameterLocation.Header,
     Description = "Enter JWT Token like: Bearer {your token}"
   });
-
   options.AddSecurityRequirement(new OpenApiSecurityRequirement
+  {
     {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            new string[] {}
-        }
-    });
+      new OpenApiSecurityScheme
+      {
+        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+      },
+      new string[] {}
+    }
+  });
 });
 
-// Custom services
 builder.Services.AddHttpClient<ITmdbService, TmdbService>(client =>
 {
   client.BaseAddress = new Uri("https://api.themoviedb.org/3/");
@@ -245,13 +237,11 @@ builder.Services.AddRateLimiter(options =>
     opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
     opt.QueueLimit = 2;
   });
-
   options.RejectionStatusCode = 429;
 });
 
 var app = builder.Build();
 
-// Show Swagger in all environments
 app.UseSwagger();
 app.UseSwaggerUI();
 
@@ -260,11 +250,9 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// REMOVED UseHttpsRedirection - Railway handles HTTPS externally
-
 app.MapControllers();
 
-// Auto-create DB on startup
+// Auto-create DB tables on startup
 using (var scope = app.Services.CreateScope())
 {
   var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
