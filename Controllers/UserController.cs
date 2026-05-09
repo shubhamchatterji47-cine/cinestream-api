@@ -269,18 +269,18 @@ namespace CineStream.Controllers
 
       var claims = new[]
       {
-        new Claim(JwtRegisteredClaimNames.Sub, configuration["Jwt:Subject"] ?? "CineStreamUser"),
+        new Claim(JwtRegisteredClaimNames.Sub, configuration["Jwt:Subject"] ?? "JwtSubject"),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         new Claim("Id", user.Id.ToString()),
         new Claim("Email", user.Email)
       };
 
       var key = new SymmetricSecurityKey(
-          Encoding.UTF8.GetBytes(configuration["Jwt:Key"]));
+          Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
 
       var signIn = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-      var token = new JwtSecurityToken(
+      var jwttoken = new JwtSecurityToken(
           configuration["Jwt:Issuer"],
           configuration["Jwt:Audience"],
           claims,
@@ -288,7 +288,7 @@ namespace CineStream.Controllers
           signingCredentials: signIn
       );
 
-      string tokenValue = new JwtSecurityTokenHandler().WriteToken(token);
+      string tokenValue = new JwtSecurityTokenHandler().WriteToken(jwttoken);
 
       return Ok(new { token = tokenValue, user = user });
     }
