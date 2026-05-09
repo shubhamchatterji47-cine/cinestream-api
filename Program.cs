@@ -154,23 +154,24 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ✅ FIXED: Convert postgresql:// URL to Npgsql connection string format
+// ✅ PostgreSQL on Railway, SQLite locally
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-string connectionString;
-
-if (databaseUrl != null && databaseUrl.StartsWith("postgresql://"))
-{
-  var uri = new Uri(databaseUrl);
-  var userInfo = uri.UserInfo.Split(':');
-  connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
-}
-else
-{
-  connectionString = databaseUrl ?? "Host=localhost;Database=cinestream;Username=postgres;Password=postgres";
-}
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString));
+{
+  if (databaseUrl != null && databaseUrl.StartsWith("postgresql://"))
+  {
+    var uri = new Uri(databaseUrl);
+    var userInfo = uri.UserInfo.Split(':');
+    var connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
+    options.UseNpgsql(connectionString);
+  }
+  else
+  {
+    // Local development uses SQLite
+    options.UseSqlite("Data Source=cinestream.db");
+  }
+});
 
 builder.Services.AddAuthentication(options =>
 {
