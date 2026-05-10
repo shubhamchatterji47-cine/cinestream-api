@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CineStream")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+19696ef59b0905a4650bbe29971787950a56fc88")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0fae5275d42386e04d14c47985f19340b8ce2a8d")]
 [assembly: System.Reflection.AssemblyProductAttribute("CineStream")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CineStream")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
