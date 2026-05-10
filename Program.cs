@@ -157,20 +157,34 @@ builder.Services.AddSwaggerGen();
 // ✅ PostgreSQL on Railway, SQLite locally
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
+// builder.Services.AddDbContext<AppDbContext>(options =>
+// {
+//   if (databaseUrl != null && databaseUrl.StartsWith("postgresql://"))
+//   {
+//     var uri = new Uri(databaseUrl);
+//     var userInfo = uri.UserInfo.Split(':');
+//     var connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
+//     options.UseNpgsql(connectionString);
+//   }
+//   else
+//   {
+//     // Local development uses SQLite
+//     options.UseSqlite("Data Source=cinestream.db");
+//   }
+// });
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-  if (databaseUrl != null && databaseUrl.StartsWith("postgresql://"))
-  {
-    var uri = new Uri(databaseUrl);
-    var userInfo = uri.UserInfo.Split(':');
-    var connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
-    options.UseNpgsql(connectionString);
-  }
-  else
-  {
-    // Local development uses SQLite
-    options.UseSqlite("Data Source=cinestream.db");
-  }
+    var connectionString =
+        builder.Configuration.GetConnectionString("DefaultConnection");
+
+    if (!string.IsNullOrEmpty(connectionString))
+    {
+        options.UseNpgsql(connectionString);
+    }
+    else
+    {
+        options.UseSqlite("Data Source=cinestream.db");
+    }
 });
 
 builder.Services.AddAuthentication(options =>
