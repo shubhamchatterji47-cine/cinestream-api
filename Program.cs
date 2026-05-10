@@ -197,14 +197,21 @@ builder.Services.AddAuthorization();
 builder.Services.AddCors(options =>
 {
   options.AddPolicy("AllowAngular", policy =>
-      policy.WithOrigins(
-          "http://localhost:4200",
-          "https://localhost:4200",
-          "https://cinestream-frontend-nine.vercel.app"
-      )
+      policy.AllowAnyOrigin()
       .AllowAnyHeader()
       .AllowAnyMethod());
 });
+//builder.Services.AddCors(options =>
+//{
+//  options.AddPolicy("AllowAngular", policy =>
+//      policy.WithOrigins(
+//          "http://localhost:4200",
+//          "https://localhost:4200",
+//          "https://cinestream-frontend-nine.vercel.app"
+//      )
+//      .AllowAnyHeader()
+//      .AllowAnyMethod());
+//});
 
 builder.Services.AddSwaggerGen(options =>
 {
