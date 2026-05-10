@@ -227,7 +227,8 @@ namespace CineStream.Controllers
       appContext.Users.Add(user);
       await appContext.SaveChangesAsync();
 
-      var confirmLink = $"https://cinestream-api-production.up.railway.app/api/user/confirm-email?token={token}";
+      //var confirmLink = $"https://cinestream-api-production.up.railway.app/api/user/confirm-email?token={token}";
+      var confirmLink = $"https://cinestream-api.onrender.com/api/user/confirm-email?token={token}";
 
       try
       {
